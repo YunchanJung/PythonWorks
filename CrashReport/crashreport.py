@@ -1,3 +1,9 @@
+# requirement
+#
+# python3.6
+# selenum python lib 설치 필요
+# chromedriver 구글링 후 다운로드, 현재 경로에 추가할 것
+
 import pip
 from selenium import webdriver
 import datetime
@@ -6,18 +12,22 @@ import time
 class Project:
     nds_node_id = ""
     nelo_project_name = ""
+    phase = ""
 
-    def __init__(self, project_name, node_id):
+    def __init__(self, project_name, node_id, phase):
         self.nds_node_id = node_id
         self.nelo_project_name = project_name
+        self.phase = phase
 
 ## user settings ##
-webDriverPath = '/Users/yunchan/Downloads/chromedriver'
+webDriverPath = './chromedriver'
 
 ## project settings ##
 project_list = [
-    Project("blog_android", "100116562"),
-    Project("post_android", "100245522")
+    Project("blog_android", "100116562", "real"),
+    Project("blog_ios", "100116563", "REAL"),
+    Project("post_android", "100245522", "real"),
+    Project("post_ios", "100245523", "real")
 ]
 
 
@@ -78,13 +88,13 @@ def getTimeStamp(date1):
     return time.mktime(datetime.datetime.strptime(strd, "%d/%m/%Y").timetuple())
 
 
-def getCrash(driver, project_name, start_date):
+def getCrash(driver, project_name, phase, start_date):
     start_time_stamp = str(getTimeStamp(start_date))[:9] + "0000"
     end_time_stamp = str(getTimeStamp(start_date + datetime.timedelta(7)))[:9] + "0000"
 
-    query_url = "http://nelo2.navercorp.com/search?cmd=projectName%3A%22" + project_name + "%22%20AND%20logLevel%3A%22FATAL%22%20AND%20phase.raw%3A%22real%22&st=" + start_time_stamp + "&et=" + end_time_stamp
+    query_url = "http://nelo2.navercorp.com/search?cmd=projectName%3A%22" + project_name + "%22%20AND%20logLevel%3A%22FATAL%22%20AND%20phase.raw%3A%22" + phase + "%22&st=" + start_time_stamp + "&et=" + end_time_stamp
     driver.get(query_url)
-    time.sleep(2)
+    time.sleep(5)
 
     count = driver.find_element_by_id("logsCount")
     count_text = str(count.text)
@@ -96,6 +106,10 @@ def print_date(start_date):
     print(start_date, "~", end_date)
 
 
+def getPercent(crash, ub):
+    crash_num = (int)(crash.replace(',',''))
+    ub_num = (int)(ub.replace(',',''))
+    return str(round(crash_num / ub_num * 100, 2))
 
 
 ## main ##
@@ -120,10 +134,9 @@ login_nelo(driver, id, pw)
 for project in project_list:
     print(project.nelo_project_name)
 
-    crash = getCrash(driver, project.nelo_project_name, start_date)
+    crash = getCrash(driver, project.nelo_project_name, project.phase, start_date)
     ub = getUB(driver, project.nds_node_id, start_date)
-
-    print("Crash %s / UB %s = " % (crash, ub) + "%")
+    print("Crash %s / UB %s = " % (crash, ub) + getPercent(crash, ub) + "%")
     print("")
 
 driver.quit()
