@@ -2,7 +2,7 @@
 #
 # python3.6
 # selenum python lib 설치 필요
-# chromedriver 구글링 후 다운로드, 현재 경로에 추가할 것
+
 
 import pip
 from selenium import webdriver
